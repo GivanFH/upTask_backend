@@ -19,8 +19,9 @@ export class ProjectController {
 
             if (projects.length === 0) {
                 const error = new Error('No hay proyectos')
-                return res.status(404).json({ error: error.message })
+                // return res.status(404).json({ error: error.message })
             }
+
             res.json(projects)
         } catch (error) {
             console.log(error)
