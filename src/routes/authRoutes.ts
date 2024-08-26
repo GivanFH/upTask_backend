@@ -23,5 +23,20 @@ router.get('/create-account',
     AuthController.createAccount
 )
 
+router.post('/confirm-account',
+    body('token')
+        .notEmpty().withMessage('El token no puede ir vacio'),
+    handleInputErrors,
+    AuthController.confirmAccount
+)
+
+router.post('/login',
+    body('email')
+        .isEmail().withMessage('El correo no es válido'),
+    body('password')
+        .notEmpty().withMessage('Ingresa tu contraseña'),
+    handleInputErrors,
+    AuthController.login
+)
 
 export default router
