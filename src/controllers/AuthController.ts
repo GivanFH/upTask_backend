@@ -94,7 +94,8 @@ export class AuthController {
             }
 
             //Revisar password
-            const isPasswordCorrect = await checkPassword( password, user.password)
+            const isPasswordCorrect = await checkPassword(password, user.password)
+
             if (!isPasswordCorrect) {
                 const error = new Error('Contraseña incorrecta')
                 return res.status(401).json({ error: error.message })
@@ -102,6 +103,112 @@ export class AuthController {
 
             res.send('Autenticado')
 
+
+        } catch (error) {
+            res.status(500).json({ error: 'Hubo un error' })
+        }
+    }
+
+    static requestConfirmationCode = async (req: Request, res: Response) => {
+        try {
+            const { email } = new User(req.body)
+
+            //Usuario existe
+            const user = await User.findOne({ email })
+
+            if (!user) {
+                const error = new Error('El usuario no está registrado')
+                return res.status(404).json({ error: error.message })
+            }
+
+            if (user.confirmed) {
+                const error = new Error('El usuario ya está confirmado')
+                return res.status(403).json({ error: error.message })
+            }
+
+            //Generar token 
+            const token = new Token()
+            token.token = generateToken()
+            token.user = user.id
+
+            //Enviar email
+            AuthEmail.sendConfirmationEmail({
+                email: user.email,
+                name: user.name,
+                token: token.token
+            })
+
+            await Promise.allSettled([user.save(), token.save()])
+            res.send('Se envio un nuevo token a tu email')
+        } catch (error) {
+            res.status(500).json({ error: 'Hubo un error' })
+        }
+    }
+
+    static forgotPassword = async (req: Request, res: Response) => {
+        try {
+            const { email } = new User(req.body)
+
+            //Usuario existe
+            const user = await User.findOne({ email })
+
+            if (!user) {
+                const error = new Error('El usuario no está registrado')
+                return res.status(404).json({ error: error.message })
+            }
+
+            //Generar token 
+            const token = new Token()
+            token.token = generateToken()
+            token.user = user.id
+            await token.save()
+
+            //Enviar email
+            AuthEmail.sendPasswordResetToken({
+                email: user.email,
+                name: user.name,
+                token: token.token
+            })
+            res.send('Revisa tu correo para reestablecer tu contraseña')
+        } catch (error) {
+            res.status(500).json({ error: 'Hubo un error' })
+        }
+    }
+
+    static validateToken = async (req: Request, res: Response) => {
+        try {
+            const { token } = req.body
+
+            const tokenExist = await Token.findOne({ token })
+            if (!tokenExist) {
+                const error = new Error('Token no valido')
+                return res.status(404).json({ error: error.message })
+            }
+
+            res.send('Token válido, define tu nueva contraseña')
+
+        } catch (error) {
+            res.status(500).json({ error: 'Hubo un error' })
+        }
+    }
+
+    static updatePasswordWithToken = async (req: Request, res: Response) => {
+        try {
+            const { token } = req.params
+            const { password } = req.body
+
+            const tokenExist = await Token.findOne({ token })
+            if (!tokenExist) {
+                const error = new Error('Token no válido')
+                return res.status(404).json({ error: error.message })
+            }
+
+            const user = await User.findById(tokenExist.user)
+            user.password = await hashPassword(password)
+
+            await Promise.allSettled([user.save(), tokenExist.deleteOne()])
+
+            res.send('La contraseña ha sido cambiada')
 
         } catch (error) {
             res.status(500).json({ error: 'Hubo un error' })
