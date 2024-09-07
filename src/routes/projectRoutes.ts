@@ -5,11 +5,14 @@ import { TaskController } from "../controllers/TaskController";
 import { handleInputErrors } from "../middleware/validation";
 import { validateProjectExists } from "../middleware/project";
 import { taskBelongsToProject, validateTaskExists } from "../middleware/task";
+import { authenticate } from "../middleware/auth";
 
 const router = Router()
 
-router.post('/',
+//Para que el middleware de authenticate se aplique a todos los endpoints 
+router.use(authenticate)
 
+router.post('/',
     body('projectName')
         .notEmpty().withMessage('El nombre del proyecto es obligatorio'),
     body('clientName')

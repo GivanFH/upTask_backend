@@ -1,28 +1,30 @@
 import monogoose, { Schema, Document, PopulatedDoc, Types } from 'mongoose'
 import { ITask } from './Tasks'
+import { IUser } from './User'
 
 //PopulateDoc ayuda a traer toda la referencia de Task al trabajarlo como un subdocumento
 //typescript
-export interface IProject extends Document  {
+export interface IProject extends Document {
     projectName: string
     clientName: string
     description: string
     tasks: PopulatedDoc<ITask & Document>[] //Referencia para que se relacionen 
+    manager: PopulatedDoc<IUser & Document>
 }
 
 //mongodb
 const ProjectSchema: Schema = new Schema({
-    projectName : {
+    projectName: {
         type: String,
         required: true,
         trim: true
     },
-    clientName : {
+    clientName: {
         type: String,
         required: true,
         trim: true
     },
-    description : {
+    description: {
         type: String,
         required: true,
         trim: true
@@ -32,8 +34,12 @@ const ProjectSchema: Schema = new Schema({
             type: Types.ObjectId,
             ref: 'Task'
         }
-    ]
-}, {timestamps: true})
+    ],
+    manager: {
+        type: Types.ObjectId,
+        ref: 'User'
+    }
+}, { timestamps: true })
 
 const Project = monogoose.model<IProject>('Project', ProjectSchema)
 export default Project
