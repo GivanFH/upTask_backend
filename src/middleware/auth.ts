@@ -27,6 +27,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
             if (user) {
                 req.user = user
+                next()
             } else {
                 res.status(500).json({ error: 'Token No Válido' })
             }
@@ -36,5 +37,5 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         res.status(500).json({ error: 'Token No Válido' })
     }
 
-    next()
+
 }
