@@ -10,6 +10,7 @@ export interface IProject extends Document {
     description: string
     tasks: PopulatedDoc<ITask & Document>[] //Referencia para que se relacionen 
     manager: PopulatedDoc<IUser & Document>
+    team: PopulatedDoc<IUser & Document>[]
 }
 
 //mongodb
@@ -38,7 +39,13 @@ const ProjectSchema: Schema = new Schema({
     manager: {
         type: Types.ObjectId,
         ref: 'User'
-    }
+    },
+    team: [
+        {
+            type: Types.ObjectId,
+            ref: 'User'
+        }
+    ]
 }, { timestamps: true })
 
 const Project = monogoose.model<IProject>('Project', ProjectSchema)
