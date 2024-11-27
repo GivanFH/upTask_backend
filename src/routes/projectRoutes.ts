@@ -4,7 +4,7 @@ import { ProjectController } from "../controllers/ProjectController";
 import { TaskController } from "../controllers/TaskController";
 import { handleInputErrors } from "../middleware/validation";
 import { validateProjectExists } from "../middleware/project";
-import { taskBelongsToProject, validateTaskExists } from "../middleware/task";
+import { hasAuthorization, taskBelongsToProject, validateTaskExists } from "../middleware/task";
 import { authenticate } from "../middleware/auth";
 import { TeamController } from "../controllers/TeamController";
 
@@ -57,6 +57,7 @@ router.param('projectId', validateProjectExists)
 
 //Este tipo de URIs se les conoce como Nested Resource Routing
 router.post('/:projectId/tasks',
+    hasAuthorization,
     body('name')
         .notEmpty().withMessage('El nombre de la tarea es obligatorio'),
     body('description')
@@ -80,6 +81,7 @@ router.get('/:projectId/tasks/:taskId',
 )
 
 router.put('/:projectId/tasks/:taskId',
+    hasAuthorization,
     param('taskId').isMongoId().withMessage('ID no valido'),
     body('name')
         .notEmpty().withMessage('El nombre de la tarea es obligatorio'),
@@ -90,6 +92,7 @@ router.put('/:projectId/tasks/:taskId',
 )
 
 router.delete('/:projectId/tasks/:taskId',
+    hasAuthorization,
     param('taskId').isMongoId().withMessage('ID no valido'),
     handleInputErrors,
     TaskController.deleteTask
@@ -122,8 +125,8 @@ router.post('/:projectId/team',
     TeamController.addMemberById
 )
 
-router.delete('/:projectId/team',
-    body('id')
+router.delete('/:projectId/team/:userId',
+    param('userId')
         .isMongoId().withMessage('Id no valido'),
     handleInputErrors,
     TeamController.removeMemberById

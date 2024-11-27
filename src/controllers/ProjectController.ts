@@ -21,7 +21,8 @@ export class ProjectController {
         try {
             const projects = await Project.find({
                 $or: [
-                    { manager: {$in: req.user.id}}
+                    { manager: { $in: req.user.id } },
+                    { team: { $in: req.user.id } }
                 ]
             })
 
@@ -47,9 +48,9 @@ export class ProjectController {
                 return res.status(404).json({ error: error.message })
             }
 
-            if (project.manager.toString() !== req.user.id.toString()) {
+            if (project.manager.toString() !== req.user.id.toString() && !project.team.includes(req.user.id)) {
                 const error = new Error('Accion no válida')
-                return res.status(404).json({error: error.message})
+                return res.status(404).json({ error: error.message })
             }
 
             res.json(project)
@@ -71,7 +72,7 @@ export class ProjectController {
 
             if (project.manager.toString() !== req.user.id.toString()) {
                 const error = new Error('Solo el manager puede actualizar un proyecto')
-                return res.status(404).json({error: error.message})
+                return res.status(404).json({ error: error.message })
             }
 
             project.clientName = req.body.clientName
@@ -99,7 +100,7 @@ export class ProjectController {
 
             if (project.manager.toString() !== req.user.id.toString()) {
                 const error = new Error('Solo el manager puede eliminar un proyecto')
-                return res.status(404).json({error: error.message})
+                return res.status(404).json({ error: error.message })
             }
 
             await project?.deleteOne()
