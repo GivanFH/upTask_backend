@@ -1,68 +1,68 @@
-import { Router } from "express";
-import { body, param } from "express-validator";
-import { ProjectController } from "../controllers/ProjectController";
-import { TaskController } from "../controllers/TaskController";
-import { handleInputErrors } from "../middleware/validation";
-import { validateProjectExists } from "../middleware/project";
-import { hasAuthorization, taskBelongsToProject, validateTaskExists } from "../middleware/task";
-import { authenticate } from "../middleware/auth";
-import { TeamController } from "../controllers/TeamController";
-import { NoteController } from "../controllers/NoteController";
+import { Router } from 'express'
+import { body, param } from 'express-validator'
+import { ProjectController } from '../controllers/ProjectController'
+import { handleInputErrors } from '../middleware/validation'
+import { TaskController } from '../controllers/TaskController'
+import { hasAuthorization, taskBelongsToProject, validateTaskExists } from '../middleware/task'
+import { authenticate } from '../middleware/auth'
+import { NoteController } from '../controllers/NoteController'
+import { validateProjectExists } from '../middleware/project'
+import { TeamController } from '../controllers/TeamController'
 
 const router = Router()
 
-//Para que el middleware de authenticate se aplique a todos los endpoints 
 router.use(authenticate)
 
 router.post('/',
     body('projectName')
-        .notEmpty().withMessage('El nombre del proyecto es obligatorio'),
+        .notEmpty().withMessage('El Nombre del Proyecto es Obligatorio'),
     body('clientName')
-        .notEmpty().withMessage('El nombre del cliente es obligatorio'),
+        .notEmpty().withMessage('El Nombre del Cliente es Obligatorio'),
     body('description')
-        .notEmpty().withMessage('La descripcion del proyecto es obligatorio'),
+        .notEmpty().withMessage('La Descripción del Proyecto es Obligatoria'),
     handleInputErrors,
     ProjectController.createProject
 )
 
-router.get('/', ProjectController.getAllProjects)
+router.get('/',  ProjectController.getAllProjects)
 
 router.get('/:id',
-    param('id').isMongoId().withMessage('ID no valido'),
+    param('id').isMongoId().withMessage('ID no válido'),
     handleInputErrors,
     ProjectController.getProjectById
 )
 
-router.put('/:id',
-    param('id').isMongoId().withMessage('ID no valido'),
+
+/** Routes for tasks */
+router.param('projectId', validateProjectExists)
+
+router.put('/:projectId',
+    param('projectId').isMongoId().withMessage('ID no válido'),
     body('projectName')
-        .notEmpty().withMessage('El nombre del proyecto es obligatorio'),
+        .notEmpty().withMessage('El Nombre del Proyecto es Obligatorio'),
     body('clientName')
-        .notEmpty().withMessage('El nombre del cliente es obligatorio'),
+        .notEmpty().withMessage('El Nombre del Cliente es Obligatorio'),
     body('description')
-        .notEmpty().withMessage('La descripcion del proyecto es obligatorio'),
+        .notEmpty().withMessage('La Descripción del Proyecto es Obligatoria'),
     handleInputErrors,
+    hasAuthorization,
     ProjectController.updateProject
 )
 
-router.delete('/:id',
-    param('id').isMongoId().withMessage('ID no valido'),
+router.delete('/:projectId',
+    param('projectId').isMongoId().withMessage('ID no válido'),
     handleInputErrors,
+    hasAuthorization,
     ProjectController.deleteProject
 )
 
-/* Routes for Task*/
 
-//De esta forma todas las funciones que tengas projectId se ejecutara antes validateProjectExists
-router.param('projectId', validateProjectExists)
-
-//Este tipo de URIs se les conoce como Nested Resource Routing
 router.post('/:projectId/tasks',
     hasAuthorization,
     body('name')
-        .notEmpty().withMessage('El nombre de la tarea es obligatorio'),
+        .notEmpty().withMessage('El Nombre de la tarea es Obligatorio'),
     body('description')
-        .notEmpty().withMessage('La descripcion es obligatoria'),
+        .notEmpty().withMessage('La descripción de la tarea es obligatoria'),
     handleInputErrors,
     TaskController.createTask
 )
@@ -71,43 +71,41 @@ router.get('/:projectId/tasks',
     TaskController.getProjectTasks
 )
 
-//---------------------------------
 router.param('taskId', validateTaskExists)
 router.param('taskId', taskBelongsToProject)
 
 router.get('/:projectId/tasks/:taskId',
-    param('taskId').isMongoId().withMessage('ID no valido'),
+    param('taskId').isMongoId().withMessage('ID no válido'),
     handleInputErrors,
     TaskController.getTaskById
 )
 
 router.put('/:projectId/tasks/:taskId',
     hasAuthorization,
-    param('taskId').isMongoId().withMessage('ID no valido'),
+    param('taskId').isMongoId().withMessage('ID no válido'),
     body('name')
-        .notEmpty().withMessage('El nombre de la tarea es obligatorio'),
+        .notEmpty().withMessage('El Nombre de la tarea es Obligatorio'),
     body('description')
-        .notEmpty().withMessage('La descripcion es obligatoria'),
+        .notEmpty().withMessage('La descripción de la tarea es obligatoria'),
     handleInputErrors,
     TaskController.updateTask
 )
 
 router.delete('/:projectId/tasks/:taskId',
     hasAuthorization,
-    param('taskId').isMongoId().withMessage('ID no valido'),
+    param('taskId').isMongoId().withMessage('ID no válido'),
     handleInputErrors,
     TaskController.deleteTask
 )
 
-router.post('/:projectId/tasks/:taskId/status',
-    param('taskId').isMongoId().withMessage('ID no valido'),
+router.post('/:projectId/tasks/:taskId/status', 
+    param('taskId').isMongoId().withMessage('ID no válido'),
     body('status')
         .notEmpty().withMessage('El estado es obligatorio'),
     handleInputErrors,
     TaskController.updateStatus
 )
-
-/** Routes for teams**/
+/** Routes for teams */
 router.post('/:projectId/team/find',
     body('email')
         .isEmail().toLowerCase().withMessage('E-mail no válido'),
@@ -121,22 +119,22 @@ router.get('/:projectId/team',
 
 router.post('/:projectId/team',
     body('id')
-        .isMongoId().withMessage('Id no valido'),
+        .isMongoId().withMessage('ID No válido'),
     handleInputErrors,
     TeamController.addMemberById
 )
 
 router.delete('/:projectId/team/:userId',
     param('userId')
-        .isMongoId().withMessage('Id no valido'),
+        .isMongoId().withMessage('ID No válido'),
     handleInputErrors,
     TeamController.removeMemberById
 )
 
-/* Routes for Notes */
+/** Routes for Notes */
 router.post('/:projectId/tasks/:taskId/notes',
     body('content')
-        .notEmpty().withMessage('El contenido de la nota es obligatorio'),
+        .notEmpty().withMessage('El Contenido de la nota es obligatorio'),
     handleInputErrors,
     NoteController.createNote
 )
@@ -146,8 +144,9 @@ router.get('/:projectId/tasks/:taskId/notes',
 )
 
 router.delete('/:projectId/tasks/:taskId/notes/:noteId',
-    param('noteId').isMongoId().withMessage('ID no válido'),
+    param('noteId').isMongoId().withMessage('ID No Válido'),
+    handleInputErrors,
     NoteController.deleteTaskNotes
 )
 
-export default router;
+export default router
